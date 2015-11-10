@@ -60,6 +60,7 @@ void loop() { //investigate changing the delay:
   
   Rightarrow = digitalRead(7);  
   Leftarrow = digitalRead(9);
+  //cannot delay and display at the same time; change to millis() call
   delay(1000);
   
   if(Rightarrow == 1){
@@ -127,7 +128,7 @@ void Display(){  //delay needs to be change
     Select = 0;
     Music();
   }  
-  
+  //cannot have LEDs display and have the delay: change call to millis()
   delay(500);
   
 }
