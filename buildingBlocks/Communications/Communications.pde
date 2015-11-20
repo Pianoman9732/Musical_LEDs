@@ -7,7 +7,7 @@
  * @author: Stuart Dilts
  *
  ******************/
-
+//3 packets of 30 values each
 
 import processing.serial.*; 
 Serial myPort;
@@ -45,15 +45,17 @@ void serialEvent(Serial p) {
     println("contact = " + inString);
     p.clear();
     firstContact = true;
-    p.write('1');
+    p.write(1);
   } else {
     if (inString.equals(Byte.toString(REQ))) { 
       println("cmd = " + inString);
-      for (int i = 0; i < 4; i++) {
-        p.write(repeats);
+      for (int i = 0; i < 10; i++) {
+        p.write(i*20);
+        p.write(10);
+        p.write(i*15);
       }
-      repeats++;
-      if (repeats > 5 ) {
+      repeats += 10;
+      if (repeats > 150) {
         repeats = 0;
       }
     } else {
