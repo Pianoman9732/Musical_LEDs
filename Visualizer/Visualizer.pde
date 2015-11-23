@@ -34,6 +34,10 @@ AudioPlayer jingle;
 FFT fftLin;
 FFT fftLog;
 
+int[] data;
+Modes mode = Modes.AVERAGE;
+int curStep;
+
 float height3;
 float height23;
 float spectrumScale = 4;
@@ -70,13 +74,14 @@ void setup() {
   // split each octave into three bands
   // this should result in 30 averages
   fftLog.logAverages( 22, 3 );
+  
+  data = new int[90];
 
   rectMode(CORNERS);
   //font = loadFont("ArialMT-12.vlw");
 }
 
-void draw()
-{
+void draw() {
   background(0);
 
   //textFont(font);
@@ -96,23 +101,22 @@ void draw()
     {
       // if the mouse is over the spectrum value we're about to draw
       // set the stroke color to red
-      if ( i == mouseX )
-      {
-       centerFrequency = fftLin.indexToFreq(i);
-       stroke(255, 0, 0);
-      } else
-      {
-       stroke(255);
-      }
+      // if ( i == mouseX )
+      // {
+      //   //centerFrequency = fftLin.indexToFreq(i);
+      //   stroke(255, 0, 0);
+      // } else {
+      //   stroke(255);
+      // }
       float map = map(fftLin.getBand(i)*spectrumScale, 0, range, 0, reference);
+
       stroke(calcRed(map), calcGreen(map), calcBlue(map));
       line(i, height3, i, height3 - fftLin.getBand(i)*spectrumScale);
     }
 
     fill(255);
-    text("Spectrum Center Frequency: " + centerFrequency, 5, height3 - 25);
+    text("Spectrum Center Frequency: " + fftLin.specSize(), 5, height3 - 25);
   }
-  stroke(0);
   // no more outline, we'll be doing filled rectangles from now
   noStroke();
 
@@ -128,18 +132,24 @@ void draw()
       // print the center frequency and fill in the rectangle with red
       if ( mouseX >= i*w && mouseX < i*w + w )
       {
-        centerFrequency = fftLin.getAverageCenterFrequency(i);
+        //centerFrequency = fftLin.getAverageCenterFrequency(i);
 
         fill(255, 128);
-        text("Linear Average Center Frequency: " + centerFrequency, 5, height23 - 25);
+        text("Linear Average Center Frequency: " + fftLin.avgSize(), 5, height23 - 25);
 
         //fill(255, 0, 0);
-      } else
-      {
-        //fill(255);
       }
+
       float map = map(fftLin.getAvg(i)*spectrumScale, 0, range, 0, reference);
-       fill(calcRed(map), calcGreen(map), calcBlue(map));
+      int red = calcRed(map);
+      int green = calcGreen(map);
+      int blue = calcBlue(map);
+      fill(red, green, blue);
+      if(mode == Modes.AVERAGE) {
+          data[i*3] = red;
+          data[i*3+1] = green;
+          data[i*3+2] = blue;
+      }
       // draw a rectangle for each average, multiply the value by spectrumScale so we can see it better
       rect(i*w, height23, i*w + w, height23 - fftLin.getAvg(i)*spectrumScale);
     }
@@ -173,14 +183,19 @@ void draw()
       if ( mouseX >= xl && mouseX < xr )
       {
         fill(255, 128);
-        text("Logarithmic Average Center Frequency: " + centerFrequency, 5, height - 25);
+        text("Logarithmic Average Center Frequency: " + fftLog.avgSize(), 5, height - 25);
         //fill(255, 0, 0);
-      } else
-      {
-        //fill(255);
       }
       float map = map(fftLog.getAvg(i)*spectrumScale, 0, range, 0, reference);
-       fill(calcRed(map), calcGreen(map), calcBlue(map));
+      int red = calcRed(map);
+      int green = calcGreen(map);
+      int blue = calcBlue(map);
+      fill(red, green, blue);
+      if(mode == Modes.AVERAGE) {
+          data[i*3] = red;
+          data[i*3+1] = green;
+          data[i*3+2] = blue;
+      }
       // draw a rectangle for each average, multiply the value by spectrumScale so we can see it better
       rect( xl, height, xr, height - fftLog.getAvg(i)*spectrumScale );
     }
@@ -201,8 +216,8 @@ public int calcRed(float n) {
     return (int)(255 + (n-8) * (-255/2));
   } else {
     //println(n);
-     //println((int)(n-9) * (255/2));
-     return (int)((n) * (255/2)); 
+    //println((int)(n-9) * (255/2));
+    return (int)((n) * (255/2)); 
   }
 }
 
@@ -211,7 +226,7 @@ public int calcGreen(float n) {
   if(n > 6 && n <= 8) {
     return (int) ((n-6) * (255/2));
   } else if(n > 8 && n <= 12) {
-      return 255;
+    return 255;
   } else if(n <= 6){
     return 0;
   } else {
