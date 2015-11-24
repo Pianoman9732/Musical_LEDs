@@ -29,7 +29,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_NUM, 6, NEO_RGB + NEO_KHZ800);
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(19200);
+  Serial.begin(9600);
   pinMode(13, OUTPUT);
 
   ensureContact();
@@ -44,28 +44,34 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
 
-    // Get next command from Serial (add 1 for final 0)
-    byte input[INPUT_SIZE + 1];
-    byte size = Serial.readBytes(input, INPUT_SIZE + 1);
-    // Add the final 0 to end the C string
-    input[size] = 0;
+    //get three packets from the processing sketch:
+    byte input[3][INPUT_SIZE + 1];
+    byte size;
+    for (byte r = 0; r < 3; r++) {
+      // Get next command from Serial (add 1 for final 0)
+      size = Serial.readBytes(input[r], INPUT_SIZE + 1);
+      // Add the final 0 to end the C string
+      input[r][size] = 0;
+    }
+
     //insert code here
     byte n = 0;
-
-    for(int i = 0; i < 15; i++) {    
-      for (byte i = 0; i < size; i += 3) {
-          strip.setPixelColor(n, input[i], input[i + 1], input[i + 2]);
+    for (byte j = 0; j < 5; j++) {
+      for (byte r = 0; r < 3; r++) {
+        for (byte i = 0; i < size; i += 3) {
+          strip.setPixelColor(n, input[r][i], input[r][i + 1], input[r][i + 2]);
           n++;
+        }
       }
     }
 
     strip.show();
-    //  insert code before here
-    for (int i = 0; i < size - 1; i++) {
-      Serial.print(input[i]);
-      Serial.print(',');
-    }
-    Serial.println(input[size - 1]);
+    //    //  insert code before here
+    //    for (int i = 0; i < size - 1; i++) {
+    //      Serial.print(input[i]);
+    //      Serial.print(',');
+    //    }
+    //    Serial.println(input[size - 1]);
 
     //    for (byte i = 0; i < input[0]; i++) {
     //      digitalWrite(13, HIGH);

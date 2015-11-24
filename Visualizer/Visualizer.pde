@@ -30,12 +30,14 @@ import ddf.minim.analysis.*;
 import ddf.minim.*;
 
 Minim minim;  
-AudioPlayer jingle;
+//AudioPlayer jingle;
+AudioInput jingle;
 FFT fftLin;
 FFT fftLog;
 
 int[] data;
-Modes mode = Modes.AVERAGE;
+
+Modes mode = Modes.LOGARITHMIC;
 int curStep;
 
 float height3;
@@ -43,7 +45,7 @@ float height23;
 float spectrumScale = 4;
 
 int range = 150;
-int reference = 14;
+int reference = 40; //originally 14
 
 //PFont font;
 
@@ -53,10 +55,11 @@ void setup() {
   height23 = 2*height/3;
 
   minim = new Minim(this);
+  jingle = minim.getLineIn(Minim.STEREO, 1024);
   //jingle = minim.loadFile("Alabama Shakes - You Ain't Alone.mp3", 1024);
-  jingle = minim.loadFile("jingle.mp3", 1024);
+  //jingle = minim.loadFile("jingle.mp3", 1024);
   //loop the file
-  jingle.loop();
+  //jingle.loop();
 
   // create an FFT object that has a time-domain buffer the same size as jingle's sample buffer
   // note that this needs to be a power of two 
@@ -76,12 +79,13 @@ void setup() {
   fftLog.logAverages( 22, 3 );
   
   data = new int[90];
-
+  setupSerial();
   rectMode(CORNERS);
   //font = loadFont("ArialMT-12.vlw");
 }
 
 void draw() {
+  int[] dataCalc = new int[90];
   background(0);
 
   //textFont(font);
@@ -146,9 +150,9 @@ void draw() {
       int blue = calcBlue(map);
       fill(red, green, blue);
       if(mode == Modes.AVERAGE) {
-          data[i*3] = red;
-          data[i*3+1] = green;
-          data[i*3+2] = blue;
+          dataCalc[i*3] = red;
+          dataCalc[i*3+1] = green;
+          dataCalc[i*3+2] = blue;
       }
       // draw a rectangle for each average, multiply the value by spectrumScale so we can see it better
       rect(i*w, height23, i*w + w, height23 - fftLin.getAvg(i)*spectrumScale);
@@ -191,15 +195,16 @@ void draw() {
       int green = calcGreen(map);
       int blue = calcBlue(map);
       fill(red, green, blue);
-      if(mode == Modes.AVERAGE) {
-          data[i*3] = red;
-          data[i*3+1] = green;
-          data[i*3+2] = blue;
+      if(mode == Modes.LOGARITHMIC && fftLog.getAvg(i) > .5) {
+          dataCalc[i*3] = red;
+          dataCalc[i*3+1] = green;
+          dataCalc[i*3+2] = blue;
       }
       // draw a rectangle for each average, multiply the value by spectrumScale so we can see it better
       rect( xl, height, xr, height - fftLog.getAvg(i)*spectrumScale );
     }
   }
+  data = dataCalc;
 }
 
 public int calcRed(float n) {

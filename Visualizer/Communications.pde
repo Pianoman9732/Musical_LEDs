@@ -16,10 +16,14 @@ enum Modes {
   AVERAGE, LOGARITHMIC
 }
 
+int timesThrough = 0;
+int packetSize = 30;
+int packetNum = 1;
+
 void setupSerial() {
-    printArray(Serial.list());
+  printArray(Serial.list());
   // Open the port you are using at the rate you want:
-  myPort = new Serial(this, Serial.list()[0], 19200);
+  myPort = new Serial(this, Serial.list()[0], 9600);
   myPort.bufferUntil(EOT);
 }
 
@@ -37,15 +41,23 @@ void serialEvent(Serial p) {
   } else {
     if (inString.equals(Byte.toString(REQ))) { 
       println("cmd = " + inString);
-      for (int i = 0; i < 10; i++) {
-        p.write(i*20);
-        p.write(10);
-        p.write(i*15);
+
+      for (int i = 0; i < packetSize; i++) {
+       p.write(data[i*3]);
+       p.write(data[i*3 + 1]);
+       p.write(data[i*3 + 2]);
       }
-      repeats += 10;
-      if (repeats > 150) {
-        repeats = 0;
-      }
+
+      //for (int i = timesThrough*packetSize; i < (packetSize + timesThrough*packetSize); i += 3) {
+      //  p.write(data[i*3]);
+      //  p.write(data[i*3 + 1]);
+      //  p.write(data[i*3 + 2]);
+      //}
+
+      //timesThrough++;
+      //if (timesThrough > 2) {
+      //  timesThrough = 0;
+      //}
     } else {
       //always send input to allow arduino to resent w/out opening and closing current program?
       //System.out.println(inString.split(",").length);
