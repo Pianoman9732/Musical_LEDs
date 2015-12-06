@@ -13,7 +13,7 @@ final byte STP = 4; //actually EOT char in ASCII
 
 
 enum Modes {
-  AVERAGE, LOGARITHMIC
+  AVERAGE, LOGARITHMIC, FULL
 }
 
 int timesThrough = 0;

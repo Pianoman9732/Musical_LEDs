@@ -37,7 +37,7 @@ FFT fftLog;
 
 int[] data;
 
-Modes mode = Modes.LOGARITHMIC;
+Modes mode = Modes.AVERAGE;
 int curStep;
 
 float height3;
@@ -55,7 +55,7 @@ void setup() {
   height23 = 2*height/3;
 
   minim = new Minim(this);
-  jingle = minim.getLineIn(Minim.STEREO, 1024);
+  jingle = minim.getLineIn(2, 1024);
   //jingle = minim.loadFile("Alabama Shakes - You Ain't Alone.mp3", 1024);
   //jingle = minim.loadFile("jingle.mp3", 1024);
   //loop the file
@@ -75,11 +75,11 @@ void setup() {
 
   // calculate averages based on a miminum octave width of 22 Hz
   // split each octave into three bands
-  // this should result in 30 averages
+  // this should result in 30 averagesh
   fftLog.logAverages( 22, 3 );
   
   data = new int[90];
-  setupSerial();
+  //setupSerial();
   rectMode(CORNERS);
   //font = loadFont("ArialMT-12.vlw");
 }
@@ -95,11 +95,12 @@ void draw() {
 
   // perform a forward FFT on the samples in jingle's mix buffer
   // note that if jingle were a MONO file, this would be the same as using jingle.left or jingle.right
-  fftLin.forward( jingle.mix );
-  fftLog.forward( jingle.mix );
+  if(mode == Modes.LOGARITHMIC) {
+    fftLog.forward( jingle.mix );
+  } else fftLin.forward( jingle.mix );
 
   // draw the full spectrum
-  {
+  if(mode == Modes.FULL) {
     noFill();
     for (int i = 0; i < fftLin.specSize(); i++)
     {
@@ -125,7 +126,7 @@ void draw() {
   noStroke();
 
   // draw the linear averages
-  {
+  if(mode == Modes.AVERAGE) {
     // since linear averages group equal numbers of adjacent frequency bands
     // we can simply precalculate how many pixel wide each average's 
     // rectangle should be.
@@ -134,22 +135,24 @@ void draw() {
     {
       // if the mouse is inside the bounds of this average,
       // print the center frequency and fill in the rectangle with red
-      if ( mouseX >= i*w && mouseX < i*w + w )
-      {
-        //centerFrequency = fftLin.getAverageCenterFrequency(i);
+      //if ( mouseX >= i*w && mouseX < i*w + w )
+      //{
+      //  //centerFrequency = fftLin.getAverageCenterFrequency(i);
 
-        fill(255, 128);
-        text("Linear Average Center Frequency: " + fftLin.avgSize(), 5, height23 - 25);
+      //  fill(255, 128);
+      //  text("Linear Average Center Frequency: " + fftLin.avgSize(), 5, height23 - 25);
 
-        //fill(255, 0, 0);
-      }
+      //  //fill(255, 0, 0);
+      //}
 
       float map = map(fftLin.getAvg(i)*spectrumScale, 0, range, 0, reference);
       int red = calcRed(map);
       int green = calcGreen(map);
       int blue = calcBlue(map);
-      fill(red, green, blue);
-      if(mode == Modes.AVERAGE) {
+      float brightness = (jingle.left.level()+jingle.right.level())/2 * 255* 50;
+      println(brightness);
+      fill(red, green, blue, brightness);
+      if(fftLog.getAvg(i) > .5) {
           dataCalc[i*3] = red;
           dataCalc[i*3+1] = green;
           dataCalc[i*3+2] = blue;
@@ -160,7 +163,7 @@ void draw() {
   }
 
   // draw the logarithmic averages
-  {
+  if(mode == Modes.LOGARITHMIC) {
     // since logarithmically spaced averages are not equally spaced
     // we can't precompute the width for all averages
     for (int i = 0; i < fftLog.avgSize(); i++)
@@ -184,18 +187,18 @@ void draw() {
 
       // if the mouse is inside of this average's rectangle
       // print the center frequency and set the fill color to red
-      if ( mouseX >= xl && mouseX < xr )
-      {
-        fill(255, 128);
-        text("Logarithmic Average Center Frequency: " + fftLog.avgSize(), 5, height - 25);
-        //fill(255, 0, 0);
-      }
+      //if ( mouseX >= xl && mouseX < xr )
+      //{
+      //  fill(255, 128);
+      //  text("Logarithmic Average Center Frequency: " + fftLog.avgSize(), 5, height - 25);
+      //  //fill(255, 0, 0);
+      //}
       float map = map(fftLog.getAvg(i)*spectrumScale, 0, range, 0, reference);
       int red = calcRed(map);
       int green = calcGreen(map);
       int blue = calcBlue(map);
       fill(red, green, blue);
-      if(mode == Modes.LOGARITHMIC && fftLog.getAvg(i) > .5) {
+      if(fftLog.getAvg(i) > .5) {
           dataCalc[i*3] = red;
           dataCalc[i*3+1] = green;
           dataCalc[i*3+2] = blue;
